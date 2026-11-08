@@ -23,13 +23,19 @@ export default function ThemeToggle({ onAction }: ThemeToggleProps) {
 
   return (
     <button
+      type="button"
+      className="rounded-full p-2 text-white transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/50"
       onClick={() => {
         setTheme(theme === "dark" ? "light" : "dark");
         onAction?.();
       }}
       aria-label="Toggle theme"
     >
-      {theme === "dark" ? <Sun /> : <Moon />}
+      {theme === "dark" ? (
+        <Sun className="text-amber-300" />
+      ) : (
+        <Moon className="text-white" />
+      )}
     </button>
   );
 }
