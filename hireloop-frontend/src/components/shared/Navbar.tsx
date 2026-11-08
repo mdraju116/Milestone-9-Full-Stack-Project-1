@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
+import UserMenu from "../auth/UserMenu";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const navlinks = [
     { label: "Browse Jobs", link: "/jobs" },
@@ -35,7 +37,7 @@ const Navbar = () => {
 
                 <div className="hidden items-center gap-1 md:flex">
 
-                    {/* before the | */}
+                 
                     {navlinks.slice(0, 3).map((navlink) => (
                         <Link
                             key={navlink.link}
@@ -51,24 +53,16 @@ const Navbar = () => {
                     ))}
 
                     <span aria-hidden="true" className="mx-3 h-6 w-px bg-white/15" />
+                    
+                    <div className="hidden shrink-0 items-center gap-3 sm:flex">
+                        <UserMenu />
+                        <ThemeToggle />
+                    </div>
 
-                    {/* after the | */}
-                    {navlinks.slice(3).map((navlink) => (
-                        <Link
-                            key={navlink.link}
-                            href={navlink.link}
-                            aria-current={isActive(navlink.link) ? "page" : undefined}
-                            className={navlink.link === "/sign-up"
-                                ? "ml-2 rounded-xl bg-[#6252f5] px-5 py-3 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(98,82,245,0.28)] transition-all hover:-translate-y-0.5 hover:bg-[#7163ff]"
-                                : `rounded-lg px-3.5 py-2.5 text-sm font-semibold transition-colors ${isActive(navlink.link)
-                                    ? "text-[#a99fff]"
-                                    : "text-[#a99fff] hover:bg-[#6252f5]/10 hover:text-white"
-                                }`}
-                        >
-                            {navlink.label}
-                        </Link>
-                    ))}
+
+
                 </div>
+
 
                 {/* humbarger */}
                 <button
@@ -102,6 +96,13 @@ const Navbar = () => {
                                 {navlink.label}
                             </Link>
                         ))}
+                    </div>
+
+                    <div className="border-t border-[#e9e2d8] px-4 pt-3">
+                        <ThemeToggle />
+                        <UserMenu />
+                        <ThemeToggle onAction={() => setIsMenuOpen(false)} />
+                        <UserMenu onAction={() => setIsMenuOpen(false)} />
                     </div>
                 </div>
             )}
