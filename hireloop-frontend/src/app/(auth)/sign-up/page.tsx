@@ -8,15 +8,18 @@ import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react"
 import toast from "react-hot-toast"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent,CardDescription,CardHeader,CardTitle,} from "@/components/ui/card"
-import {Field, FieldDescription, FieldError, FieldGroup,FieldLabel,} from "@/components/ui/field"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card"
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import {InputGroup,InputGroupAddon,InputGroupButton,InputGroupInput,} from "@/components/ui/input-group"
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, } from "@/components/ui/input-group"
 import { Separator } from "@/components/ui/separator"
 import { signUp } from "@/lib/auth-client"
 import { SocialSignInButtons } from "@/components/auth/SocialSignInButtons"
 import { useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
 
+type UserRole = "jobSeeker" | "employer"
+type SignUpRole = UserRole | ""
 
 type SignUpValues = {
   name: string
@@ -24,6 +27,7 @@ type SignUpValues = {
   email: string
   password: string
   confirmPassword: string
+  role: SignUpRole
 }
 
 type SignUpErrors = Partial<Record<keyof SignUpValues, string>>
@@ -36,7 +40,9 @@ const initialValues: SignUpValues = {
   email: "",
   password: "",
   confirmPassword: "",
+  role: "",
 }
+
 
 function validateName(name: string) {
   if (!name.trim()) return "Name is required"
@@ -104,9 +110,9 @@ const SignUpPage = () => {
   //Submit form
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-	
-	  //part-1 :Submission Guard -Prevents another submission if one is already in progress
-    if (isSubmitting) {return}
+
+    //part-1 :Submission Guard -Prevents another submission if one is already in progress
+    if (isSubmitting) { return }
 
     //part-2 :Form Validation
     const nextErrors: SignUpErrors = {
@@ -118,21 +124,22 @@ const SignUpPage = () => {
         values.confirmPassword,
         values.password
       ),
+      role: values.role ? undefined : "Please select your role",
     }
 
     setErrors(nextErrors)
 
     if (Object.values(nextErrors).some(Boolean)) { return }
 
-
-    //part-3 :Form Submission
-    setIsSubmitting(true) //means the form submission is currently running.
+      //part-3 :Form Submission
+      setIsSubmitting(true) //means the form submission is currently running.
 
     try {
 
       // Send data to MongoDB through Better Auth
       const { error } = await signUp.email({
         name: values.name.trim(),
+        role: values.role as UserRole,
         image: values.image.trim() || undefined,
         email: values.email.trim(),
         password: values.password,
@@ -185,6 +192,37 @@ const SignUpPage = () => {
                   aria-invalid={!!errors.name}
                 />
                 <FieldError>{errors.name}</FieldError>
+              </Field>
+
+              {/* Role */}
+              <Field data-invalid={!!errors.role}>
+                <FieldLabel htmlFor="role">I want to join as</FieldLabel>
+
+                <Select
+                  value={values.role}
+                  onValueChange={(value) => {
+                    setValues((prev) => ({
+                      ...prev,
+                      role: value as UserRole,
+                    }))
+                    setErrors((prev) => ({ ...prev, role: undefined }))
+                  }}
+                >
+                  <SelectTrigger
+                    id="role"
+                    className="w-full bg-white dark:bg-white"
+                    aria-invalid={!!errors.role}
+                  >
+                    <SelectValue placeholder="Select your role" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectItem value="jobSeeker">Job Seeker</SelectItem>
+                    <SelectItem value="employer">Employer</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <FieldError>{errors.role}</FieldError>
               </Field>
 
               {/* Image URL (optional) */}

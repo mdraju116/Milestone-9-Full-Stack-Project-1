@@ -12,6 +12,15 @@ export const auth = betterAuth({
 		enabled: true,
 		autoSignIn: false,
 	},
+	user: {
+		additionalFields: {
+			role: {
+				type: ["jobSeeker", "employer"],
+				required: true,
+				input: true,
+			},
+		},
+	},
 	database: mongodbAdapter(db, {
 		client
 	}),
