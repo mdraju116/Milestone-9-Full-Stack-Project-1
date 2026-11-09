@@ -68,7 +68,7 @@ const UserMenu = ({ onAction }: UserMenuProps) => {
     return (
       <div className="flex items-center gap-2">
         <Spinner className="text-[#068a3f]" />
-        <span className="text-xs text-muted-foreground">Loading...</span>
+        <span className="text-xs text-muted-foreground">checking user...</span>
       </div>
     );
   }

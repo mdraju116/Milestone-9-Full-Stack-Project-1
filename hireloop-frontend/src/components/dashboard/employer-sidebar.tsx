@@ -5,15 +5,16 @@ import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarGroup, SidebarG
 import { LayoutDashboard, BriefcaseBusiness, PlusCircle, Users, Building2, Settings, } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, ChevronsUpDown } from "lucide-react";
 import toast from "react-hot-toast";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
+import { Spinner } from "@/components/ui/spinner";
+
 
 const EmployerSidebar = () => {
     const router = useRouter();
-    const { data: session } = useSession();
+    const { data: session,isPending } = useSession();
     const user = session?.user;
 
     const handleSignOut = async () => {
@@ -29,6 +30,15 @@ const EmployerSidebar = () => {
         router.refresh();
     };
 
+    if (isPending) {
+        return (
+          <div className="flex items-center gap-2">
+            <Spinner className="text-[#068a3f]" />
+            <span className="text-xs text-muted-foreground">Loading user...</span>
+          </div>
+        );
+      }
+
     return (
         <Sidebar collapsible="icon">
 
@@ -36,44 +46,33 @@ const EmployerSidebar = () => {
             {/* Sidebar Header */}
             <SidebarHeader>
                 {/* HireLoop Branding */}
-                <div className="flex items-center gap-2 px-2 py-2">
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#068a3f] text-white">
-                        <span className="text-lg font-bold">H</span>
-                    </div>
+                <div className="flex items-center gap-2 px-2 py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
 
-                    <span className="text-lg font-bold tracking-tight">
-                        HireLoop
-                    </span>
-
-
+                    <Image
+                        src="/assets/images/logo.png"
+                        alt="HireLoop"
+                        width={150}
+                        height={40}
+                        priority
+                    />
                 </div>
 
                 {/* Recruiter Account Card */}
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" tooltip="Account" className="h-auto py-2">
-                            {/* Profile Image */}
-                            {/* <Avatar className="h-12 w-12 shrink-0 rounded-lg">
-                                <AvatarImage
-                                    src={user?.image || ""}
-                                    alt={user?.name || "User"}
-                                    className="object-cover"
-                                />
-                                <AvatarFallback className="rounded-lg">
-                                    {user?.name?.charAt(0).toUpperCase() || "R"}
-                                </AvatarFallback>
-                            </Avatar> */}
-                            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+
+                            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:rounded-full">
                                 {user?.image ? (
                                     <Image
                                         src={user.image}
                                         alt={user.name || "User"}
                                         fill
-                                        sizes="48px"
+                                        sizes="64px"
                                         className="object-cover"
                                     />
                                 ) : (
-                                    <div className="flex h-full w-full items-center justify-center text-lg font-semibold">
+                                    <div className="flex h-full w-full items-center justify-center text-lg font-semibold group-data-[collapsible=icon]:text-sm">
                                         {user?.name?.charAt(0).toUpperCase() || "R"}
                                     </div>
                                 )}
@@ -164,6 +163,7 @@ const EmployerSidebar = () => {
                     </SidebarGroupContent>
                 </SidebarGroup>
 
+
                 {/* Company Settings */}
                 <SidebarGroup>
                     <SidebarGroupLabel>Company</SidebarGroupLabel>
@@ -187,6 +187,7 @@ const EmployerSidebar = () => {
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
+
 
             {/* 3 */}
             {/* Sidebar Footer */}
