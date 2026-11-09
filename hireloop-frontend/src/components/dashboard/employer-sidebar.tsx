@@ -1,0 +1,212 @@
+"use client";
+
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, } from "@/components/ui/sidebar";
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, } from "@/components/ui/sidebar";
+import { LayoutDashboard, BriefcaseBusiness, PlusCircle, Users, Building2, Settings, } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useSession, signOut } from "@/lib/auth-client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LogOut, ChevronsUpDown } from "lucide-react";
+import toast from "react-hot-toast";
+import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
+
+const EmployerSidebar = () => {
+    const router = useRouter();
+    const { data: session } = useSession();
+    const user = session?.user;
+
+    const handleSignOut = async () => {
+        const { error } = await signOut();
+
+        if (error) {
+            toast.error("Could not sign out. Please try again.");
+            return;
+        }
+
+        toast.success("Signed out successfully!");
+        router.push("/");
+        router.refresh();
+    };
+
+    return (
+        <Sidebar collapsible="icon">
+
+            {/* 1 */}
+            {/* Sidebar Header */}
+            <SidebarHeader>
+                {/* HireLoop Branding */}
+                <div className="flex items-center gap-2 px-2 py-2">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#068a3f] text-white">
+                        <span className="text-lg font-bold">H</span>
+                    </div>
+
+                    <span className="text-lg font-bold tracking-tight">
+                        HireLoop
+                    </span>
+
+
+                </div>
+
+                {/* Recruiter Account Card */}
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton size="lg" tooltip="Account" className="h-auto py-2">
+                            {/* Profile Image */}
+                            {/* <Avatar className="h-12 w-12 shrink-0 rounded-lg">
+                                <AvatarImage
+                                    src={user?.image || ""}
+                                    alt={user?.name || "User"}
+                                    className="object-cover"
+                                />
+                                <AvatarFallback className="rounded-lg">
+                                    {user?.name?.charAt(0).toUpperCase() || "R"}
+                                </AvatarFallback>
+                            </Avatar> */}
+                            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+                                {user?.image ? (
+                                    <Image
+                                        src={user.image}
+                                        alt={user.name || "User"}
+                                        fill
+                                        sizes="48px"
+                                        className="object-cover"
+                                    />
+                                ) : (
+                                    <div className="flex h-full w-full items-center justify-center text-lg font-semibold">
+                                        {user?.name?.charAt(0).toUpperCase() || "R"}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* User Information */}
+                            <div className="grid min-w-0 flex-1 gap-1 text-left leading-tight">
+                                <span className="truncate text-sm font-semibold">
+                                    {user?.name || "Recruiter"}
+                                </span>
+
+                                <span className="truncate text-xs text-muted-foreground">
+                                    {user?.email || ""}
+                                </span>
+
+                                <Badge
+                                    variant="secondary"
+                                    className="h-4 w-fit rounded border border-green-200 bg-green-100 px-1.5 text-[10px] font-medium text-green-700 hover:bg-green-100"
+                                >
+                                    {user?.role === "employer" ? "Recruiter" : user?.role}
+                                </Badge>
+                            </div>
+
+                            <ChevronsUpDown className="ml-auto size-4 shrink-0" />
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarHeader>
+
+
+            {/* 2 */}
+            {/* Sidebar Navigation */}
+            <SidebarContent>
+                {/* Main Navigation */}
+                <SidebarGroup>
+                    <SidebarGroupLabel>Overview</SidebarGroupLabel>
+
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    tooltip="Dashboard"
+                                    onClick={() => router.push("/employer/dashboard")}
+                                >
+                                    <LayoutDashboard />
+                                    <span>Dashboard</span>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                {/* Job Management */}
+                <SidebarGroup>
+                    <SidebarGroupLabel>Job Management</SidebarGroupLabel>
+
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    tooltip="Add a Job"
+                                    onClick={() => router.push("/employer/add-job")}
+                                >
+                                    <PlusCircle />
+                                    <span>Add a Job</span>
+
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+
+                            <SidebarMenuItem>
+                                <SidebarMenuButton tooltip="Manage Job"
+                                    onClick={() => router.push("/employer/manage-jobs")}
+                                >
+                                    <BriefcaseBusiness />
+                                    <span>Manage Job</span>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+
+                            <SidebarMenuItem>
+                                <SidebarMenuButton tooltip="Applications"
+                                    onClick={() => router.push("/employer/applications")}
+                                >
+                                    <Users />
+                                    <span>Applications</span>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                {/* Company Settings */}
+                <SidebarGroup>
+                    <SidebarGroupLabel>Company</SidebarGroupLabel>
+
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton tooltip="Company Profile">
+                                    <Building2 />
+                                    <span>Company Profile</span>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+
+                            <SidebarMenuItem>
+                                <SidebarMenuButton tooltip="Settings">
+                                    <Settings />
+                                    <span>Settings</span>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+            </SidebarContent>
+
+            {/* 3 */}
+            {/* Sidebar Footer */}
+            <SidebarFooter>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            tooltip="Sign Out"
+                            onClick={handleSignOut}
+                        >
+                            <LogOut />
+                            <span>Sign Out</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarFooter>
+
+            <SidebarRail />
+        </Sidebar>
+    );
+};
+
+export default EmployerSidebar;

@@ -43,7 +43,6 @@ const UserMenu = ({ onAction }: UserMenuProps) => {
   }, []);
 
   // Sign out using Better Auth client
-  // Clear the Better Auth session before notifying the parent navigation state.
   const handleSignOut = async () => {
     try {
       setIsSigningOut(true);
@@ -73,6 +72,22 @@ const UserMenu = ({ onAction }: UserMenuProps) => {
       </div>
     );
   }
+
+  //Navigate to role-based dashboard page
+  const handleSeeProfile = () => {
+    const role = session?.user?.role;
+
+    setIsDropdownOpen(false);
+    onAction?.();
+
+    if (role === "jobSeeker") {
+      router.push("/job-seeker/dashboard");
+    } else if (role === "employer") {
+      router.push("/employer/dashboard");
+    } else {
+      toast.error("Invalid user role");
+    }
+  };
 
   // Check if user is logged in
   const user = session?.user;
@@ -154,18 +169,14 @@ const UserMenu = ({ onAction }: UserMenuProps) => {
               {/* Actions */}
               <div className="flex flex-col gap-1.5 p-2">
                 {/* See profile */}
-                <Link
-                  href="/profile-info"
-                  role="menuitem"
-                  onClick={() => {
-                    setIsDropdownOpen(false);
-                    onAction?.();
-                  }}
+                <Button
+                  type="button"
+                  onClick={handleSeeProfile}
                   className="flex h-8 w-full items-center justify-center gap-2 rounded-lg bg-[#068a3f] px-2.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-[#057536]"
                 >
                   <UserRound className="h-3.5 w-3.5" />
                   See Profile
-                </Link>
+                </Button>
 
                 {/* Sign out */}
                 <Button
@@ -209,7 +220,7 @@ const UserMenu = ({ onAction }: UserMenuProps) => {
           >
             Sign Up
           </Link>
-          
+
 
         </div>
       )}
