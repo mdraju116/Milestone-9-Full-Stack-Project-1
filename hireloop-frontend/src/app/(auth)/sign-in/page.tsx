@@ -7,16 +7,16 @@ import toast from "react-hot-toast"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Card,CardContent,CardDescription,CardHeader,CardTitle,} from "@/components/ui/card"
-import {Field,FieldError,FieldGroup,FieldLabel,} from "@/components/ui/field"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card"
+import { Field, FieldError, FieldGroup, FieldLabel, } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import {InputGroup,InputGroupAddon,InputGroupButton,InputGroupInput,} from "@/components/ui/input-group"
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, } from "@/components/ui/input-group"
 import { Separator } from "@/components/ui/separator"
 import { signIn } from "@/lib/auth-client"
 import { SocialSignInButtons } from "@/components/auth/SocialSignInButtons"
 import { useRouter, useSearchParams } from "next/navigation"
 
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 
 
 type SignInErrors = {
@@ -62,7 +62,7 @@ const SignInForm = () => {
     e.preventDefault()
 
     //part-1 :Submission Guard -Prevents another submission if one is already in progress
-    if (isSubmitting) {return}
+    if (isSubmitting) { return }
 
     //part-2 :Form Validation
     const nextErrors: SignInErrors = {
@@ -78,12 +78,12 @@ const SignInForm = () => {
     setIsSubmitting(true)
 
     try {
-     // Send data to MongoDB through Better Auth
-      const { error } = await signIn.email({
+
+      // Send email, pass & rememberMe to MongoDB and receive userData through Better Auth
+      const { data, error } = await signIn.email({
         email: email.trim(),
         password,
         rememberMe,
-        callbackURL: "/",
       })
 
       if (error) {
@@ -93,8 +93,20 @@ const SignInForm = () => {
       }
 
       toast.success("Signed in successfully!")
-      router.push("/")
+
+      // role-based redirection
+      const role = data.user.role
+
+      if (role === "jobSeeker") {
+        router.push("/job-seeker/dashboard")
+      } else if (role === "employer") {
+        router.push("/employer/dashboard")
+      } else {
+        toast.error("Invalid user role")
+        return
+      }
       router.refresh()
+
     } catch (error) {
       console.error("Sign-in error:", error)
       toast.error("Something went wrong. Please try again.")
@@ -130,7 +142,7 @@ const SignInForm = () => {
                   placeholder="you@example.com"
                   value={email}
 
-                 // collect form data 
+                  // collect form data 
                   onChange={(e) => {
                     setEmail(e.target.value)
                     setErrors((prev) => ({ ...prev, email: undefined }))
