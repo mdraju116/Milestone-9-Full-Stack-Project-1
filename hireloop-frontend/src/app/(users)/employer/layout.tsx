@@ -5,15 +5,15 @@ import EmployerSidebar from "@/components/dashboard/employer-sidebar";
 export default function EmployerLayout({children,}: {children: React.ReactNode;}) {
   
 return (
-    <SidebarProvider>
+    <SidebarProvider className="dark bg-[#111112] text-white">
       <EmployerSidebar />
 
-      <SidebarInset>
-        <header className="flex h-14 items-center border-b px-4">
+      <SidebarInset className="bg-[#111112]">
+        <header className="flex h-14 items-center border-b border-white/[0.06] bg-[#111112] px-4">
           <SidebarTrigger />
         </header>
 
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4 sm:p-6">
           {children}
         </main>
 

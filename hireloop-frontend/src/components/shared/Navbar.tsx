@@ -18,6 +18,8 @@ const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const pathname = usePathname();
 
+    if (pathname.startsWith("/employer")) return null;
+
     const isActive = (link: string) =>
         link === "/" ? pathname === "/" : pathname === link || pathname.startsWith(`${link}/`);
 

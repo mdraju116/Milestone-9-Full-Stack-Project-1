@@ -3,7 +3,7 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, } from "@/components/ui/sidebar";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, } from "@/components/ui/sidebar";
 import { LayoutDashboard, BriefcaseBusiness, PlusCircle, Users, Building2, Settings, } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
 import { LogOut, ChevronsUpDown } from "lucide-react";
 import toast from "react-hot-toast";
@@ -14,6 +14,7 @@ import { Spinner } from "@/components/ui/spinner";
 
 const EmployerSidebar = () => {
     const router = useRouter();
+    const pathname = usePathname();
     const { data: session,isPending } = useSession();
     const user = session?.user;
 
@@ -40,7 +41,7 @@ const EmployerSidebar = () => {
       }
 
     return (
-        <Sidebar collapsible="icon">
+        <Sidebar collapsible="icon" className="border-white/6">
 
             {/* 1 */}
             {/* Sidebar Header */}
@@ -113,7 +114,8 @@ const EmployerSidebar = () => {
                     <SidebarGroupContent>
                         <SidebarMenu>
                             <SidebarMenuItem>
-                                <SidebarMenuButton
+                <SidebarMenuButton
+                                    isActive={pathname === "/employer/dashboard"}
                                     tooltip="Dashboard"
                                     onClick={() => router.push("/employer/dashboard")}
                                 >
@@ -133,6 +135,7 @@ const EmployerSidebar = () => {
                         <SidebarMenu>
                             <SidebarMenuItem>
                                 <SidebarMenuButton
+                                    isActive={pathname === "/employer/add-job"}
                                     tooltip="Add a Job"
                                     onClick={() => router.push("/employer/add-job")}
                                 >
@@ -143,7 +146,7 @@ const EmployerSidebar = () => {
                             </SidebarMenuItem>
 
                             <SidebarMenuItem>
-                                <SidebarMenuButton tooltip="Manage Job"
+                                <SidebarMenuButton isActive={pathname === "/employer/manage-jobs"} tooltip="Manage Job"
                                     onClick={() => router.push("/employer/manage-jobs")}
                                 >
                                     <BriefcaseBusiness />
@@ -152,7 +155,7 @@ const EmployerSidebar = () => {
                             </SidebarMenuItem>
 
                             <SidebarMenuItem>
-                                <SidebarMenuButton tooltip="Applications"
+                                <SidebarMenuButton isActive={pathname === "/employer/applications"} tooltip="Applications"
                                     onClick={() => router.push("/employer/applications")}
                                 >
                                     <Users />

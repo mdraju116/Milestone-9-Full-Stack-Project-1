@@ -2,7 +2,7 @@
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, } from "@/components/ui/sidebar";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, } from "@/components/ui/sidebar";
-import { LayoutDashboard, BriefcaseBusiness, PlusCircle, Users, DollarSign, Settings, } from "lucide-react";
+import { LayoutDashboard, BriefcaseBusiness, PlusCircle, DollarSign, Settings, } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
 import { LogOut, ChevronsUpDown } from "lucide-react";
@@ -135,7 +135,7 @@ const JobSeekerSidebar = () => {
                             <SidebarMenuItem>
                                 <SidebarMenuButton
                                     tooltip="Save a Job"
-                                    onClick={() => router.push("/employer/saved-jobs")}
+                                    onClick={() => router.push("/job-seeker/saved-jobs")}
                                 >
                                     <PlusCircle />
                                     <span>Saved Jobs</span>

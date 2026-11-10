@@ -102,7 +102,7 @@ const SignUpPage = () => {
   //collect form data & update the SignUpValues
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-    setValues((prev) => ({ ...prev, [name]: value })) //name = "name" , value = "Raju"
+    setValues((prev) => ({ ...prev, [name]: value })) //[name] = "name" , value = "Raju"
     setErrors((prev) => ({ ...prev, [name]: undefined }))
   }
 
@@ -177,6 +177,7 @@ const SignUpPage = () => {
         <CardContent>
           <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
             <FieldGroup>
+              
               {/* Name */}
               <Field data-invalid={!!errors.name}>
                 <FieldLabel htmlFor="name">Name</FieldLabel>
