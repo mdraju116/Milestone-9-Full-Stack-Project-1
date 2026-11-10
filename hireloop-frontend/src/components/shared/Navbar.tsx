@@ -18,14 +18,12 @@ const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const pathname = usePathname();
 
-    if (pathname.startsWith("/employer")) return null;
-
     const isActive = (link: string) =>
         link === "/" ? pathname === "/" : pathname === link || pathname.startsWith(`${link}/`);
 
 
     return (
-        <header className="relative z-10 bg-[#18191b] ">
+        <header className="relative  z-10 bg-[#18191b] ">
             <nav
                 aria-label="Main navigation"
                 className="mx-auto mt-3 flex min-h-18  max-w-7xl items-center justify-between rounded-2xl border border-white/10 bg-[#202022]/95  shadow-[0_18px_50px_rgba(0,0,0,0.22)] backdrop-blur-xl px-4 sm:px-5 lg:px-8"

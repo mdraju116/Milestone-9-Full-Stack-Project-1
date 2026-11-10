@@ -40,14 +40,18 @@ app.get('/', (req, res) => {
 
 //post job
 app.post("/employer/add-job", async (req, res) => {
-    const newJob = req.body;
+    const newJob = {
+        ...req.body,
+        createdAt: new Date(),
+    };
     console.log("data from client", newJob); //message to server console    
+
     const result = await jobs.insertOne(newJob);
     res.send(result);
 });
 
 
-app.get("/employer/jobs", async(req,res)=>{
+app.get("/employer/jobs", async (req, res) => {
     const allJobs = await jobs.find({}).toArray();
     res.send(allJobs);
 

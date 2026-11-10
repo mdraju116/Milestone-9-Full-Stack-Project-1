@@ -9,7 +9,7 @@ return (
       <EmployerSidebar />
 
       <SidebarInset className="bg-[#111112]">
-        <header className="flex h-14 items-center border-b border-white/[0.06] bg-[#111112] px-4">
+        <header className="flex h-14 items-center border-b border-white/6 bg-[#111112] px-4">
           <SidebarTrigger />
         </header>
 
