@@ -25,6 +25,7 @@ type JobForm = {
     benefits: string;
     skills: string;
     applicationUrl: string;
+    applicants:number; // not has at form, but need in manage job, so added manually
 };
 
 const initialForm: JobForm = {
@@ -45,6 +46,7 @@ const initialForm: JobForm = {
     benefits: "",
     skills: "React, TypeScript, Next.js",
     applicationUrl: "",
+    applicants : 0, 
 };
 
 const categories = ["Engineering & Tech", "Design & Creative", "Marketing", "Sales", "Finance", "Operations"];
