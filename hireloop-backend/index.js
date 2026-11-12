@@ -58,6 +58,139 @@ app.get("/employer/jobs", async (req, res) => {
 })
 
 
+// browse jobs with search + filter combined (basic)
+// app.get("/jobs", async (req, res) => {
+//   const search = req.query.search || "";
+//   const jobType = req.query.jobType;
+
+//   const query = {};
+
+//   // Search by job title
+//   if (search) {
+//     query.title = {
+//       $regex: search,
+//       $options: "i",
+//     };
+//   }
+
+//   // Filter by job type
+//   if (jobType) {
+//     query.jobType = jobType;
+//   }
+
+//   const result = await jobs.find(query).toArray();
+
+//   res.send(result);
+// });
+
+
+
+
+app.get("/jobs", async (req, res) => {
+  try {
+    // 1. Read and validate query parameters
+    const search =
+      typeof req.query.search === "string"
+        ? req.query.search.trim()
+        : "";
+
+    const jobType =
+      typeof req.query.jobType === "string"
+        ? req.query.jobType
+        : "";
+
+    const page = Math.max(
+      parseInt(req.query.page, 10) || 1,
+      1
+    );
+
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit, 10) || 10, 1),
+      50
+    );
+
+    const sort =
+      typeof req.query.sort === "string"
+        ? req.query.sort
+        : "newest";
+
+    // 2. Escape special regex characters
+    const escapedSearch = search.replace(
+      /[.*+?^${}()|[\]\\]/g,
+      "\\$&"
+    );
+
+    // 3. Build search query
+    const searchQuery = {};
+
+    if (escapedSearch) {
+      searchQuery.title = {
+        $regex: escapedSearch,
+        $options: "i",
+      };
+    }
+
+    // 4. Build complete query (search + filter)
+    const query = { ...searchQuery };
+
+    if (jobType && jobType !== "All") {
+      query.jobType = jobType;
+    }
+
+    // 5. Sorting options with stable tie-breaker
+    const sortOptions = {
+      newest: { createdAt: -1, _id: -1 },
+      oldest: { createdAt: 1, _id: 1 },
+      titleAsc: { title: 1, _id: 1 },
+      titleDesc: { title: -1, _id: -1 },
+    };
+
+    const sortOrder =
+      sortOptions[sort] || sortOptions.newest;
+
+    // 6. Pagination
+    const skip = (page - 1) * limit;
+
+    // 7. Fetch jobs
+    const items = await jobs
+      .find(query)
+      .sort(sortOrder)
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+
+    // 8. Count all matching jobs (search + filter)
+    const total = await jobs.countDocuments(query);
+
+    // 9. Count job types (search only, excluding jobType filter)
+    const typeCounts = await jobs.aggregate([
+      { $match: searchQuery },
+      {
+        $group: {
+          _id: "$jobType",
+          count: { $sum: 1 },
+        },
+      },
+    ]).toArray();
+
+    // 10. Send response
+    res.send({
+      items,
+      total,
+      page,
+      limit,
+      typeCounts,
+    });
+
+  } catch (error) {
+    console.error("Failed to fetch jobs:", error);
+
+    res.status(500).send({
+      message: "Failed to fetch jobs",
+    });
+  }
+});
+
 
 
 app.listen(port, () => {
