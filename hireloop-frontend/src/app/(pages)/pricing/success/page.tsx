@@ -68,7 +68,7 @@ export default async function Success({ searchParams }: { searchParams: Promise<
                             href="mailto:orders@example.com"
                             className="mt-2 inline-block text-sm font-medium text-green-400 hover:text-green-300"
                         >
-                            orders@example.com
+                            hireloop@admin.com
                         </Link>
                     </div>
 
