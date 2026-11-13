@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import {ArrowLeft,ArrowRight,Banknote,BriefcaseBusiness,ChevronDown,Clock3,Layers2,Search,} from "lucide-react";
+import { ArrowLeft, ArrowRight, Banknote, BriefcaseBusiness, ChevronDown, Clock3, Layers2, Search, } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type Job = {
   _id: string;
@@ -31,7 +32,9 @@ const PAGE_SIZE = 4;
 const SERVER_BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL?.trim().replace(/\/$/, "") ?? "";
 const EMPTY_RESPONSE: JobsResponse = { items: [], total: 0, page: 1, limit: PAGE_SIZE, typeCounts: [] };
 
+// Format salary ranges consistently, including jobs with only one bound or no listed salary.
 function formatSalary(job: Job) {
+  // Keep nonnumeric salary text intact while abbreviating large numeric amounts.
   if (job.minSalary == null && job.maxSalary == null) return "Salary not listed";
 
   const formatAmount = (value: number | string | undefined) => {
@@ -50,6 +53,7 @@ function formatSalary(job: Job) {
   return `${range}${frequency ? `/${frequency}` : ""}`;
 }
 
+// Build a compact fallback mark for the company tile when no logo is available.
 function companyInitials(name: string) {
   return name
     .split(/\s+/)
@@ -59,23 +63,35 @@ function companyInitials(name: string) {
     .join("") || "CO";
 }
 
+// Keep filter counts compact enough to fit beside each job type.
 function formatCount(count: number) {
   return new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(count);
 }
 
+// Render searchable job listings with URL-backed search and job type filters.
 const JobsPage = () => {
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [jobType, setJobType] = useState("All");
   const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(1);
   const [completedRequest, setCompletedRequest] = useState<{ key: string; data: JobsResponse; error: string } | null>(null);
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get("search") ?? "";
+  const initialJobType = searchParams.get("jobType") ?? "All";
+  const [jobType, setJobType] = useState(JOB_TYPES.includes(initialJobType) ? initialJobType : "All");
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const [search, setSearch] = useState(initialSearch);
+
+  // Build the API query from the current listing state.
   const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE), sort });
   if (search) params.set("search", search);
   if (jobType !== "All") params.set("jobType", jobType);
+
+
+
   const requestKey = params.toString();
   const endpoint = SERVER_BASE_URL ? `${SERVER_BASE_URL}/jobs?${requestKey}` : "";
+
   const currentRequest = completedRequest?.key === requestKey ? completedRequest : null;
   const data = currentRequest?.data ?? EMPTY_RESPONSE;
   const loading = Boolean(SERVER_BASE_URL) && !currentRequest;
@@ -83,6 +99,8 @@ const JobsPage = () => {
     ? "The jobs server URL is not configured."
     : currentRequest?.error ?? "";
 
+
+  // Fetch the current result page and ignore responses after the request is cancelled.
   useEffect(() => {
     if (!endpoint) return;
 
@@ -92,7 +110,9 @@ const JobsPage = () => {
       try {
         const response = await fetch(endpoint, { signal: controller.signal });
         if (!response.ok) throw new Error("Could not load jobs. Please try again.");
+
         const result: JobsResponse = await response.json();
+
         if (!result || !Array.isArray(result.items)) throw new Error("The jobs server returned an unexpected response.");
         setCompletedRequest({
           key: requestKey,
@@ -119,6 +139,7 @@ const JobsPage = () => {
     return () => controller.abort();
   }, [endpoint, page, requestKey]);
 
+  // Derive filter totals and a small sliding window of page buttons from the response.
   const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
   const typeCountMap = useMemo(() => new Map<string, number>(data.typeCounts.map(({ _id, count }) => [_id, count] as [string, number])), [data.typeCounts]);
   const pageNumbers = useMemo(() => {
@@ -127,15 +148,42 @@ const JobsPage = () => {
     return Array.from({ length: 3 }, (_, index) => start + index);
   }, [page, totalPages]);
 
+  // Apply the entered search while preserving the active filter in the address bar.
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const value = searchInput.trim();
+    const nextParams = new URLSearchParams(searchParams.toString());
+
+    if (value) nextParams.set("search", value);
+    else nextParams.delete("search");
+    if (jobType !== "All") nextParams.set("jobType", jobType);
+    else nextParams.delete("jobType");
+    nextParams.set("page", "1");
+
+    setSearch(value);
     setPage(1);
-    setSearch(searchInput.trim());
+    router.push(`/jobs?${nextParams.toString()}`);
+  };
+
+  // Toggle a job type filter and mirror it in the URL for sharing and browser history.
+  const updateJobType = (type: string) => {
+    const nextJobType = jobType === type ? "All" : type;
+    const nextParams = new URLSearchParams(searchParams.toString());
+
+    if (nextJobType === "All") nextParams.delete("jobType");
+    else nextParams.set("jobType", nextJobType);
+    nextParams.set("page", "1");
+
+    setJobType(nextJobType);
+    setPage(1);
+    router.push(`/jobs?${nextParams.toString()}`);
   };
 
   return (
     <div className="min-h-full bg-[#080809] text-[#f4f4f5]">
+      {/* Search controls, listing filters, results, and pagination. */}
       <main className="mx-auto w-full max-w-360 px-4 pb-16 pt-6 sm:px-6 lg:px-8 lg:pt-8">
+        {/* Search by keyword without dropping the selected job type. */}
         <form onSubmit={submitSearch} className="mb-7 flex flex-col gap-3 rounded-2xl border border-white/8 bg-[#141416] p-4 sm:flex-row sm:p-6">
           <label className="flex min-h-15 flex-1 items-center gap-3 rounded-xl border border-white/[0.07] bg-[#1b1b1f] px-4 focus-within:border-violet-500/70">
             <Search aria-hidden="true" className="size-5 shrink-0 text-[#85858e]" />
@@ -154,6 +202,7 @@ const JobsPage = () => {
         </form>
 
         <div className="grid items-start gap-6 lg:grid-cols-[296px_minmax(0,1fr)] lg:gap-8">
+          {/* Job type filters and their counts from the current result set. */}
           <aside className="rounded-2xl border border-white/8 bg-[#141416] p-5 sm:p-6">
             <h2 className="text-xl font-semibold">Filters</h2>
             <fieldset className="mt-7">
@@ -166,7 +215,7 @@ const JobsPage = () => {
                       key={type}
                       type="button"
                       aria-pressed={selected}
-                      onClick={() => { setJobType(selected ? "All" : type); setPage(1); }}
+                      onClick={() => updateJobType(type)}
                       className="flex min-h-10 w-full items-center gap-3 rounded-lg px-1 text-left text-sm text-[#a1a1aa] transition hover:text-white"
                     >
                       <span className={`flex size-5 items-center justify-center rounded border ${selected ? "border-white bg-white text-[#17171a]" : "border-white/10 bg-[#202024]"}`} aria-hidden="true">
@@ -181,6 +230,7 @@ const JobsPage = () => {
             </fieldset>
           </aside>
 
+          {/* Result summary, sorting, job cards, and empty or loading states. */}
           <section aria-labelledby="jobs-heading" className="min-w-0">
             <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <h1 id="jobs-heading" className="text-xl font-semibold sm:text-2xl">
@@ -249,6 +299,7 @@ const JobsPage = () => {
               ))}
             </div>
 
+            {/* Show pagination only when the result set spans multiple pages. */}
             {totalPages > 1 && (
               <nav aria-label="Job results pages" className="mt-10 flex flex-wrap items-center justify-center gap-2">
                 <button type="button" aria-label="Previous page" disabled={page <= 1 || loading} onClick={() => setPage((current) => Math.max(1, current - 1))} className="flex size-10 items-center justify-center rounded-xl border border-white/8 text-[#b0b0b8] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40">
@@ -269,6 +320,7 @@ const JobsPage = () => {
   );
 };
 
+// Render one pagination control with the current page exposed to assistive technology.
 function PageButton({ pageNumber, currentPage, disabled, onSelect }: { pageNumber: number; currentPage: number; disabled: boolean; onSelect: (page: number) => void }) {
   const active = pageNumber === currentPage;
   return (
