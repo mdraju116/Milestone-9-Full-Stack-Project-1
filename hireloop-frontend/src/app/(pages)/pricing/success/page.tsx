@@ -1,7 +1,6 @@
 
 
 import { redirect } from 'next/navigation'
-
 import { stripe } from '../../../../lib/stripe'
 import Link from 'next/link'
 
@@ -11,17 +10,27 @@ export default async function Success({ searchParams }: { searchParams: Promise<
     if (!session_id)
         throw new Error('Please provide a valid session_id (`cs_test_...`)')
 
-    const { status, customer_details: customerDetails } = await stripe.checkout.sessions.retrieve(session_id, {
+    const {
+        status,
+        // customer_details: customerDetails,
+        payment_status,
+        customer_email,
+        metadata,
+        payment_intent,
+
+    } = await stripe.checkout.sessions.retrieve(session_id, {
         expand: ['line_items', 'payment_intent']
     })
-    const customerEmail = customerDetails?.email
+    // const customerEmail = customerDetails?.email
 
     if (status === 'open') {
         return redirect('/')
     }
 
-    if (status === 'complete') {
+    if (status === 'complete' && payment_status==="paid") {
 
+        console.log({status,payment_status,metadata, payment_intent})
+               
         return (
             <section
                 id="success"
@@ -59,7 +68,7 @@ export default async function Success({ searchParams }: { searchParams: Promise<
                         <p className="text-sm leading-6 text-gray-300">
                             A confirmation email will be sent to{" "}
                             <span className="font-semibold text-white">
-                                {customerEmail}
+                                {customer_email}
                             </span>.
                             <br /> If you have any questions, please contact us.
                         </p>

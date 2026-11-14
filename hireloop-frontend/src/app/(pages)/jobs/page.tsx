@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { ArrowLeft, ArrowRight, Banknote, BriefcaseBusiness, ChevronDown, Clock3, Layers2, Search, } from "lucide-react";
+import { ArrowLeft, ArrowRight, Banknote, Bookmark, BriefcaseBusiness, ChevronDown, Clock3, Layers2, Search, } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type Job = {
@@ -72,6 +73,7 @@ function formatCount(count: number) {
 const JobsPage = () => {
   const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(1);
+  const [savedJobs, setSavedJobs] = useState<Set<string>>(() => new Set());
   const [completedRequest, setCompletedRequest] = useState<{ key: string; data: JobsResponse; error: string } | null>(null);
 
   const router = useRouter();
@@ -266,7 +268,8 @@ const JobsPage = () => {
               )}
               {!error && data.items.map((job) => (
                 <article key={job._id} className="rounded-2xl border border-white/8 bg-[#141416] p-5 transition-colors hover:border-white/[0.14] sm:p-6 lg:p-7">
-                  <div className="flex items-start gap-4 sm:gap-5">
+                  <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-5">
+                    <div className="flex min-w-0 flex-1 items-start gap-4 sm:gap-5">
                     <div aria-hidden="true" className="flex size-16 shrink-0 items-center justify-center rounded-xl border border-white/8 bg-[#202024] text-lg font-semibold text-violet-200">
                       {companyInitials(job.companyName || "Company")}
                     </div>
@@ -293,6 +296,27 @@ const JobsPage = () => {
                           </span>
                         )}
                       </div>
+                    </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Link href={`/jobs/${job._id}`} className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-[#19191c] transition hover:bg-[#e9e9ed] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400 sm:flex-none">
+                        View details
+                      </Link>
+                      <button
+                        type="button"
+                        aria-label={savedJobs.has(job._id) ? "Remove from saved jobs" : "Save for later"}
+                        aria-pressed={savedJobs.has(job._id)}
+                        title={savedJobs.has(job._id) ? "Remove from saved jobs" : "Save for later"}
+                        onClick={() => setSavedJobs((current) => {
+                          const next = new Set(current);
+                          if (next.has(job._id)) next.delete(job._id);
+                          else next.add(job._id);
+                          return next;
+                        })}
+                        className={`flex size-10 shrink-0 items-center justify-center rounded-xl border transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400 ${savedJobs.has(job._id) ? "border-violet-400/50 bg-violet-500/15 text-violet-200" : "border-white/10 text-[#b0b0b8] hover:bg-white/10 hover:text-white"}`}
+                      >
+                        <Bookmark aria-hidden="true" className="size-4" fill={savedJobs.has(job._id) ? "currentColor" : "none"} />
+                      </button>
                     </div>
                   </div>
                 </article>
