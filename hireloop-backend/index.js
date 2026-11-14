@@ -36,9 +36,13 @@ const jobs = database.collection("jobs");
 const companies = database.collection("companies");
 const savedJobs = database.collection("savedJobs");
 const applications = database.collection("applications");
+const payments = database.collection("payments");
+const PREMIUM_PRICE_ID = process.env.STRIPE_PREMIUM_PRICE_ID || "price_1UbGcDGs6plR5djCifc4C1JJ";
 await Promise.all([
   savedJobs.createIndex({ userId: 1, jobId: 1 }, { unique: true }),
   applications.createIndex({ userId: 1, jobId: 1 }, { unique: true }),
+  payments.createIndex({ userId: 1 }, { unique: true }),
+  payments.createIndex({ checkoutSessionId: 1 }, { unique: true }),
 ]);
 
 
@@ -249,6 +253,8 @@ const isValidId = (id) => ObjectId.isValid(id);
 
 // Get authenticated user's ID
 const getUserId = (req) => req.user.id;
+const toUserDbId = (userId) => ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
+const getUserFilter = (userId) => ({ _id: toUserDbId(userId) });
 
 // 1. GET /jobs/:jobId
 // Get complete job details
@@ -431,6 +437,99 @@ app.get(
 );
 
 
+// Return premium state and the current user's application count.
+app.get("/users/premium", requireAuth, requireRole("jobSeeker"), async (req, res) => {
+  try {
+    const userId = getUserId(req);
+    const user = await users.findOne(getUserFilter(userId), { projection: { premium: 1 } });
+    const paidRecord = await payments.findOne({ userId, status: "paid" }, { projection: { _id: 1 } });
+    const applyCount = await applications.countDocuments({ userId });
+
+    res.send({ premium: user?.premium === true || Boolean(paidRecord), applyCount });
+  } catch (error) {
+    console.error("Get premium status error:", error);
+    res.status(500).send({ message: "Failed to get premium status" });
+  }
+});
+
+// Verify the signed-in user's Stripe Checkout Session and record the one-time payment.
+app.post("/verify-payment/:checkoutSessionId", requireAuth, requireRole("jobSeeker"), async (req, res) => {
+  try {
+    const { checkoutSessionId } = req.params;
+    const userId = getUserId(req);
+
+    if (!/^cs_(test|live)_/.test(checkoutSessionId)) {
+      return res.status(400).send({ message: "Invalid Checkout Session ID" });
+    }
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(503).send({ message: "Payment verification is not configured" });
+    }
+
+    const stripeUrl = new URL(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(checkoutSessionId)}`);
+    stripeUrl.searchParams.append("expand[]", "line_items");
+    const stripeResponse = await fetch(stripeUrl, {
+      headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}` },
+    });
+    const stripeSession = await stripeResponse.json();
+
+    if (stripeResponse.status === 404) return res.status(404).send({ message: "Checkout Session not found" });
+    if (!stripeResponse.ok) {
+      console.error("Stripe session lookup failed:", stripeSession?.error?.message);
+      return res.status(502).send({ message: "Could not verify payment with Stripe" });
+    }
+
+    if (stripeSession.metadata?.userId !== userId || stripeSession.client_reference_id !== userId) {
+      return res.status(403).send({ message: "This Checkout Session belongs to another account" });
+    }
+    if (stripeSession.mode !== "payment" || stripeSession.status !== "complete" || stripeSession.payment_status !== "paid") {
+      return res.status(402).send({ message: "Payment has not completed" });
+    }
+
+    const lineItems = stripeSession.line_items?.data ?? [];
+    if (!lineItems.some((item) => item.price?.id === PREMIUM_PRICE_ID)) {
+      return res.status(400).send({ message: "Checkout Session is not for the premium plan" });
+    }
+
+    const user = await users.findOne(getUserFilter(userId), { projection: { _id: 1 } });
+    if (!user) return res.status(404).send({ message: "Account not found" });
+
+    const existingPayment = await payments.findOne({ userId });
+    if (existingPayment && existingPayment.checkoutSessionId !== checkoutSessionId) {
+      await users.updateOne(getUserFilter(userId), { $set: { premium: true }, $unset: { pendingCheckoutSessionId: "" } });
+      return res.send({ verified: true, premium: true, message: "Premium is already active" });
+    }
+
+    await payments.updateOne(
+      { checkoutSessionId },
+      {
+        $setOnInsert: {
+          userId,
+          checkoutSessionId,
+          paymentIntentId: typeof stripeSession.payment_intent === "string" ? stripeSession.payment_intent : stripeSession.payment_intent?.id ?? null,
+          amount: stripeSession.amount_total,
+          currency: stripeSession.currency,
+          status: "paid",
+          premium: true,
+          paidAt: new Date(stripeSession.created * 1000),
+        },
+      },
+      { upsert: true },
+    );
+
+    await users.updateOne(getUserFilter(userId), {
+      $set: { premium: true },
+      $unset: { pendingCheckoutSessionId: "" },
+    });
+
+    res.send({ verified: true, premium: true });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).send({ message: "A premium payment is already recorded for this account" });
+    }
+    console.error("Verify payment error:", error);
+    res.status(500).send({ message: "Failed to verify payment" });
+  }
+});
 // 5. POST /job-seeker/applications
 // Apply for a job
 app.post(
@@ -477,6 +576,18 @@ app.post(
       if (existingApplication) {
         return res.status(409).send({
           message: "You have already applied for this job",
+        });
+      }
+
+      const user = await users.findOne(getUserFilter(userId), { projection: { premium: 1 } });
+      const paidRecord = await payments.findOne({ userId, status: "paid" }, { projection: { _id: 1 } });
+      const applyCount = await applications.countDocuments({ userId });
+      const hasPremium = user?.premium === true || Boolean(paidRecord);
+
+      if (applyCount > 2 && !hasPremium) {
+        return res.status(402).send({
+          code: "PREMIUM_REQUIRED",
+          message: "Premium is required after three applications",
         });
       }
 

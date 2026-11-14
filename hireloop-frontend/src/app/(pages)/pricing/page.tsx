@@ -1,6 +1,6 @@
 
-const PricingPage = async ({searchParams,}: { searchParams: Promise<{ canceled?: string }>;}) => {
-    const { canceled } = await searchParams;
+const PricingPage = async ({searchParams,}: { searchParams: Promise<{ canceled?: string; alreadyPremium?: string }>;}) => {
+    const { canceled, alreadyPremium } = await searchParams;
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-12">
@@ -10,6 +10,11 @@ const PricingPage = async ({searchParams,}: { searchParams: Promise<{ canceled?:
                 {canceled && (
                     <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm text-yellow-400">
                         Your checkout was canceled. You can try again whenever you&apos;re ready.
+                    </div>
+                )}
+                {alreadyPremium && (
+                    <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-sm text-green-400">
+                        Your account already has premium access.
                     </div>
                 )}
 
@@ -33,11 +38,11 @@ const PricingPage = async ({searchParams,}: { searchParams: Promise<{ canceled?:
                     {/* Price */}
                     <div className="mb-6 border-b border-white/10 pb-6">
                         <div className="flex items-baseline gap-2">
-                            <span className="text-4xl font-bold text-white">$19</span>
-                            <span className="text-sm text-gray-400">/ month</span>
+                            <span className="text-4xl font-bold text-white">$20</span>
+                            <span className="text-sm text-gray-400">one-time</span>
                         </div>
                         <p className="mt-2 text-xs text-gray-500">
-                            Billed monthly. Cancel anytime.
+                            Pay once for permanent premium access.
                         </p>
                     </div>
 

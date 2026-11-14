@@ -182,6 +182,21 @@ export default function JobDetailsPage({ params }: { params: Promise<{ jobId: st
 
     setApplying(true);
     try {
+      const premiumResponse = await fetch(`${SERVER_BASE_URL}/users/premium`, {
+        credentials: "include",
+        cache: "no-store",
+      });
+      const premiumStatus = await premiumResponse.json().catch(() => ({}));
+      if (premiumResponse.status === 401) {
+        router.push(`/sign-in?callbackURL=${encodeURIComponent(`/jobs/${jobId}`)}`);
+        return;
+      }
+      if (!premiumResponse.ok) throw new Error(premiumStatus.message || "Could not check your premium status.");
+      if (premiumStatus.premium !== true && Number(premiumStatus.applyCount) > 2) {
+        router.push("/pricing");
+        return;
+      }
+
       const response = await fetch(`${SERVER_BASE_URL}/job-seeker/applications`, {
         method: "POST",
         credentials: "include",
@@ -190,6 +205,10 @@ export default function JobDetailsPage({ params }: { params: Promise<{ jobId: st
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) {
+        if (response.status === 402 && result.code === "PREMIUM_REQUIRED") {
+          router.push("/pricing");
+          return;
+        }
         if (response.status === 409 && /already applied/i.test(result.message || "")) setHasApplied(true);
         throw new Error(result.message || "Could not submit your application.");
       }
